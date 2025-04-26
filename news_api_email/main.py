@@ -26,15 +26,17 @@ headers = {
 
 # Adding a delay to avoid being flagged for sending requests too quickly
 # This is especially important when scraping multiple pages
-time.sleep(5)
+time.sleep(1)
 
-# Make an HTTP GET request to the target URL with the headers
-request = requests.get(url, headers=headers)
+request = requests.get(url, headers=headers) # Make an HTTP GET request to the target URL with the headers
 
-# Check if the request was successful (HTTP status code 200)
-if request.status_code == 200:
+if request.status_code == 200: # Check if the request was successful (HTTP status code 200)
     content = request.text  # Get the HTML content as text
-    print(content)          # Print the HTML to the console (can be saved or processed later)
+    content_json = request.json()  # Parse the JSON response
+    print(type(content_json))
+    print(content_json['articles'][0]['title'])  # Print the title of the first article
+    for article in content_json['articles']:
+        print(article['title'])
 else:
     # If the server responds with an error code, print the error
     print(f"Error: {request.status_code}")
