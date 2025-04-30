@@ -9,6 +9,7 @@ import requests  # Library to make HTTP requests
 import time       # Library to add delays (sleep)
 import os         # Library to access environment variables
 from dotenv import load_dotenv  # Library to load variables from a .env file
+from send_email import send_email  # Custom function to send emails
 
 # URL of the target webpage
 # url = "https://finance.yahoo.com
@@ -16,7 +17,7 @@ from dotenv import load_dotenv  # Library to load variables from a .env file
 load_dotenv() # Load environment variables from a .env file
 API_KEY = os.getenv("API_KEY")
 url = "https://newsapi.org/v2/everything?q=tesla&" \
-        "from=2025-03-26&sortBy=publishedAt&" \
+        "from=2025-03-30&sortBy=publishedAt&" \
         f"apiKey={API_KEY}"
 
 # HTTP headers to simulate a real web browser request
@@ -35,8 +36,24 @@ if request.status_code == 200: # Check if the request was successful (HTTP statu
     content_json = request.json()  # Parse the JSON response
     print(type(content_json))
     print(content_json['articles'][0]['title'])  # Print the title of the first article
+
+
+    if not content_json['articles']:
+        raise ValueError("No articles found in the response.")
+    body = ""
     for article in content_json['articles']:
-        print(article['title'])
+        title = "" + article.get('title', 'No Title Available')
+        description = "" + str(article.get('description', 'No Description Available'))
+        body += title + "\n" + description + "\n\n"
+    print("finished")
+
+    body = body.encode('utf-8')  # Encode the body to handle special characters
+    send_email(
+        subject="Latest Tesla News",
+        body=body,
+        to_email="bezabuilders@gmail.com"
+    )  # Send the email with the news articles
+
 else:
     # If the server responds with an error code, print the error
     print(f"Error: {request.status_code}")

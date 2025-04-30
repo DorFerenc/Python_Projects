@@ -56,5 +56,6 @@ news_api_email/
 - API keys are loaded securely using `dotenv`.
 - Sensitive files are excluded from version control (`.gitignore`).
 - Clean and understandable project structure.
-
+- Ping email command: ```ping smtp-relay.brevo.com```
+- [site for emails](https://app-smtp.brevo.com/real-time)
 ---
