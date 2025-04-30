@@ -43,7 +43,7 @@ def send_email(subject, body, to_email):
 
             # Compose message with UTF-8 support
             msg = EmailMessage()
-            msg.set_content(body.decode('utf-8'))
+            msg.set_content(body)
             msg['Subject'] = subject
             msg['From'] = sender_email
             msg['To'] = to_email
