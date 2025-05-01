@@ -1,2 +1,8 @@
+#Project: news_api_email
 requests>=2.25.1 # for making HTTP requests
 python-dotenv>=0.20.0 # for .env file support
+
+#Project:NLP_for_eBooks
+nltk>=3.6.3 # for natural language processing tasks
+streamlit>=1.0.0 # for building the web app
+plotly>=5.0.0 # for interactive visualizations
