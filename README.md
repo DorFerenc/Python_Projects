@@ -18,13 +18,14 @@ cd python_small_projects
 
 ```bash
 cd news_api_email
+# or
+cd NLP_for_eBooks
 ```
 
 ### 3. Install Dependencies
 
-* Each project has its own `requirements.txt` file. Install with:
-* You can also install the top `requirements.txt` includes all the projects.
-
+* You can either install project-specific `requirements.txt` file.
+* Or install the global one at the root of the repo:
 ```bash
 pip install -r requirements.txt
 ```
@@ -43,7 +44,11 @@ Fetches top 3 headlines for tech, science, and business from US & Israel using N
 > 📬 Great for personal info digests or automation exercises.
 
 ### `NLP_for_eBooks/`
+Analyzes diary entries using sentiment analysis (nltk) and displays visualized mood trends using streamlit and plotly.
 
+- Uses: nltk, plotly, streamlit
+- Reads .txt files from /diary
+- Outputs sentiment graphs for positivity & negativity
 ---
 
 ## 📬 Contributing
