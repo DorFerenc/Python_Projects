@@ -6,3 +6,6 @@ python-dotenv>=0.20.0 # for .env file support
 nltk>=3.6.3 # for natural language processing tasks
 streamlit>=1.0.0 # for building the web app
 plotly>=5.0.0 # for interactive visualizations
+
+#3 Webcam Alert
+opencv-python>=4.5.3 # for image processing and computer vision tasks
