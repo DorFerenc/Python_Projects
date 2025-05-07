@@ -1,37 +1,49 @@
-# controller.py
-import socket
+#!/usr/bin/env python3
+import socket, os, sys, time
 
-# CHANGE THIS to your Ubuntu machine's IP address
-TARGET_IP = '192.168.X.X'
-PORT = 5555
+TARGET, PORT = "192.168.56.101", 5555
+SECRET = "your_shared_secret"  # must match agent
+LOGDIR = "logs"
+os.makedirs(LOGDIR, exist_ok=True)
 
-def connect_to_agent():
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        client.connect((TARGET_IP, PORT))
-        print("[+] Connected to agent!\n")
+# Connect
+s = socket.socket()
+s.connect((TARGET, PORT))
 
-        while True:
-            # Wait for prompt from agent
-            response = client.recv(4096).decode()
-            print(response, end='')
+# SSL placeholder
+# s = ssl.wrap_socket(s, ca_certs="certs/ca.crt", cert_reqs=ssl.CERT_REQUIRED)
 
-            # Send command input to agent
-            cmd = input()
-            client.send(cmd.encode())
+# Authenticate
+prompt = s.recv(1024).decode()
+if prompt.strip().endswith("Password:"):
+    s.sendall((SECRET + "\n").encode())
+    auth = s.recv(1024).decode()
+    if auth.startswith("[!] Auth failed"): print(auth); sys.exit(1)
+    print(auth, end="")
+else:
+    print("[!] Unexpected prompt:", prompt); sys.exit(1)
 
-            if cmd.strip().lower() == "exit":
-                print("[*] Closing connection.")
-                break
+# Interactive loop
+while True:
+    data = s.recv(4096)
+    if not data: break
+    text = data.decode(errors='ignore')
+    if text.startswith("FILE:"):
+        # Parse header
+        _, fname, size = text.strip().split(":")
+        size = int(size)
+        # Receive file bytes
+        buf = b""
+        while len(buf) < size:
+            buf += s.recv(size - len(buf))
+        path = os.path.join(LOGDIR, fname)
+        with open(path, "wb") as f: f.write(buf)
+        print(f"[+] Received file: {path}")
+        continue
+    # Regular output
+    sys.stdout.write(text)
+    cmd = input()
+    s.sendall((cmd + "\n").encode())
+    if cmd.strip() == "exit": break
 
-            # Receive response
-            response = client.recv(8192).decode()
-            print(response)
-
-    except Exception as e:
-        print(f"[!] Connection error: {e}")
-    finally:
-        client.close()
-
-if __name__ == "__main__":
-    connect_to_agent()
+s.close()
