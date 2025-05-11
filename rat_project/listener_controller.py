@@ -5,6 +5,8 @@ from datetime import datetime
 
 KEY = b'secretkey'
 BUFFER_SIZE = 4096
+HOST = "0.0.0.0"
+PORT = 443 # 8080, 53
 
 def xor_encrypt(data):
     return bytes([b ^ KEY[i % len(KEY)] for i, b in enumerate(data)])
@@ -25,9 +27,9 @@ def main():
     log_file = f"session_{get_timestamp()}.log"
     server = socket.socket()
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind(("0.0.0.0", 443))
+    server.bind((HOST, PORT))
     server.listen(1)
-    print("[+] Listening on port 443...")
+    print(f"[+] Listening on port {PORT}...")
 
     client_socket, addr = server.accept()
     print(f"[+] Connection from {addr[0]}")

