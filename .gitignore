@@ -78,3 +78,94 @@ Desktop.ini
 *.bak
 *.swp
 *~
+
+###############################################################################
+#  .gitignore – CNAPP-lite (Python) – Visual Studio / VS Code                 #
+###############################################################################
+
+########################
+#  Python build files  #
+########################
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# PyInstaller
+*.spec
+*.manifest
+
+##############################
+#  Distribution / packaging  #
+##############################
+build/
+dist/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+wheels/
+share/python-wheels/
+
+############################
+#  Virtual-env & tooling   #
+############################
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version           # pyenv
+Pipfile.lock              # pipenv
+poetry.lock               # poetry
+__pypackages__/           # PEP 582
+
+########################
+#  Test & coverage     #
+########################
+.pytest_cache/
+.tox/
+.nox/
+.coverage*
+htmlcov/
+.hypothesis/
+
+########################
+#  Logs & runtime      #
+########################
+*.log
+logs/
+scan_result.json         # CNAPP-lite output file
+
+########################
+#  IDE / editor stuff  #
+########################
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+########################
+#  OS generated files  #
+########################
+.DS_Store
+Thumbs.db
+
+########################
+#  Secrets / configs   #
+########################
+.env
+.env.*
+*.pem
+*.key
+*.crt
+.aws/credentials
+.aws/config
+
+########################
+#  Docker artefacts    #
+########################
+# keep Dockerfile, ignore stray build folders
+docker-build/
